@@ -6,13 +6,14 @@ import {useCallback, useState} from "react";
 
 function App() {
     const [triangles, setTriangles] = useState<Triangle[]>([]);
+    const [i, setI] = useState(0);
     const afterGetTriangles = (triangles: Triangle[]) => setTriangles(triangles);
 
     return (
-        <div className={style["App"]}>
+        <div className={style["App"]} >
             <ParamsForm afterGetTriangles={afterGetTriangles}/>
 
-            <WebGL triangles={triangles}/>
+            <WebGL key={i} triangles={triangles}/>
         </div>
     );
 }

@@ -27,23 +27,31 @@ const ParamsForm: FC<ParamsFormProps> = ({afterGetTriangles}) => {
     }
 
     return (
-        <form className={style["Form"]} onSubmit={onSubmit}>
-            <label htmlFor="height">Height</label>
-            <input className={style["Input"]} id="height" type="number" onInput={(ev) => setHeight(+ev.currentTarget.value)}/>
+        <div className={style['Wrapper']}>
+            <form className={style["Form"]} onSubmit={onSubmit}>
+                <h2>Parameters</h2>
 
-            <label htmlFor="radius">Radius</label>
-            <input className={style["Input"]} id="radius" type="number" onInput={(ev) => setRadius(+ev.currentTarget.value)}/>
+                <label htmlFor="height">Height</label>
+                <input className={style["Input"]} id="height" type="number"
+                       onInput={(ev) => setHeight(+ev.currentTarget.value)}/>
 
-            <label htmlFor="segments">Segments</label>
-            <input className={style["Input"]} id="segments" type="number" onInput={(ev) => setSegments(+ev.currentTarget.value)}/>
 
-            <button className={style["Button"]} disabled={loading} type="submit">
-                {loading
-                    ? <span className={style.Loader}>loading</span>
-                    : <span>Confirm</span>
-                }
-            </button>
-        </form>
+                <label htmlFor="radius">Radius</label>
+                <input className={style["Input"]} id="radius" type="number"
+                       onInput={(ev) => setRadius(+ev.currentTarget.value)}/>
+
+                <label htmlFor="segments">Segments</label>
+                <input className={style["Input"]} id="segments" type="number"
+                       onInput={(ev) => setSegments(+ev.currentTarget.value)}/>
+
+                <button className={style["Button"]} disabled={loading} type="submit">
+                    {loading
+                        ? <span className={style.Loader}>loading</span>
+                        : <span>Confirm</span>
+                    }
+                </button>
+            </form>
+        </div>
     );
 }
 
