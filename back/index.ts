@@ -1,6 +1,7 @@
 import http from 'http';
 import url from 'url';
 import {IncomingMessage, ServerResponse} from 'http';
+import {Context} from "node:vm";
 
 class ConeData {
     height: number;
@@ -35,7 +36,7 @@ const server = http
 
         console.log(pathname);
         if (pathname === '/cone' && req.method === 'POST') {
-            let requestBody = [];
+            const requestBody = [];
             req.on('data', chunk => {
                 requestBody.push(chunk.toString());
             });
@@ -46,6 +47,7 @@ const server = http
 
                     if (!coneData.invalid) {
                         const result = calculateCone(coneData);
+                        console.log(result);
                         res.writeHead(200, {'Content-Type': 'application/json'});
                         res.end(JSON.stringify(result));
                     } else {
@@ -63,9 +65,28 @@ const server = http
         }
     });
 
-function calculateCone(coneData: ConeData): any[] {
-    // your cone calculation logic here
-    return [];
+function calculateCone(data: ConeData): any[] {
+    const triangles = [];
+    for (let i = 0; i < data.segments; i++) {
+        triangles.push(makeTriangle(data, i));
+    }
+    return triangles;
+}
+
+function makeTriangle({height, radius, segments}: ConeData, curSegment: number) {
+    return [
+        {x: 0, y: height, z: 0},
+        makeP(curSegment, radius, segments),
+        makeP(curSegment+1, radius, segments),
+    ]
+}
+
+function makeP(index: number, radius: number, segments: number) {
+    return {
+        x: radius * Math.cos(2*Math.PI*index / segments),
+        y: 0,
+        z: radius * Math.sin(2*Math.PI*index / segments),
+    }
 }
 server.listen(3001, 'localhost', () => {
     console.log('Server is running on port 3001');

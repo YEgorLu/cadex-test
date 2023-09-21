@@ -19,11 +19,12 @@ const ParamsForm: FC<ParamsFormProps> = ({afterGetTriangles}) => {
         setLoading(true);
         fetchTriangles({height, radius, segments})
             .then(resp => {
-                setLoading(false);
-                afterGetTriangles(resp.triangles);
+                afterGetTriangles(resp as any);
+                console.log(resp);
                 console.log('completed');
             })
-            .catch(() => alert('Something went wrong'));
+            .catch(() => alert('Something went wrong'))
+            .finally(() => setLoading(false));
     }
 
     return (

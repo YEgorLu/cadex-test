@@ -1,12 +1,12 @@
 import {FC, useEffect, useRef} from "react";
 import * as THREE from "three";
-import {Triangle} from "../../models/triangle";
+import {Triangle as MathTriangle} from "../../models/triangle";
 import style from './Webgl.module.scss';
 import {ArcballControls} from "three/examples/jsm/controls/ArcballControls";
-import TrianglesStorage from './triangles-storage';
+import trianglesStorage, {Triangle} from "./triangles-storage";
 
 export interface WebGLProps {
-    triangles: Triangle[];
+    triangles: MathTriangle[];
 }
 
 const WebGL: FC<WebGLProps> = ({triangles}) => {
@@ -15,6 +15,7 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
     const cameraRef = useRef(new THREE.PerspectiveCamera());
     const rendererRef = useRef<THREE.WebGLRenderer>();
     const controllers = useRef<{update: () => void}[]>([]);
+    const usedTriangles = useRef<Triangle[]>([]);
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -23,29 +24,28 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
         const width = canvasRef.current.offsetWidth;
         const height = canvasRef.current.offsetHeight;
 
-        // Create camera
         const camera = cameraRef.current;
         camera.fov = 75;
         camera.aspect = width / height;
         camera.near = .1;
         camera.far = 1000;
         camera.position.z = 50;
+        /*camera.position.x = 50;
+        camera.position.y = 50;*/
 
-        // Create renderer
         const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current });
         rendererRef.current = renderer;
         renderer.setSize(width, height);
 
-        // Create sphere
-        /*const geometry = new THREE.SphereGeometry(1, 32, 32);
-        const material = new THREE.MeshStandardMaterial({ color: 'red' });
-        const sphere = new THREE.Mesh(geometry, material);
-*/
-        /*const light = new THREE.DirectionalLight(0x404040, 0.8);
-        light.position.set(3,3,3);*/
-        const light = new THREE.AmbientLight(THREE.Color.NAMES.white);
-
-        sceneRef.current.add(light);
+        const light = new THREE.DirectionalLight(THREE.Color.NAMES.white, 1);
+        const ambient = new THREE.DirectionalLight(THREE.Color.NAMES.white, 1);
+        light.position.x = 50;
+        light.position.y = 50;
+        light.position.z = 50;
+        ambient.position.x = -50;
+        ambient.position.y = -50;
+        ambient.position.z = -50;
+        sceneRef.current.add(light, ambient);
 
         // Create ArcBallController
         const arcBallController = new ArcballControls(camera, renderer.domElement);
@@ -81,26 +81,40 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
         const renderer = rendererRef.current;
         const scene = sceneRef.current;
         const camera = cameraRef.current;
-        console.log('gettings');
-        console.log({renderer, scene, camera});
-        console.log([renderer, scene, camera].some(v => !v));
+
         if ([renderer, scene, camera].some(v => !v)) return;
-        setTimeout(() => console.log(camera), 1000);
-        const [triangle] = TrianglesStorage.getItems(1);
-        triangle.setPoints([
-            new THREE.Vector3(5, -0.75, 1),
-            new THREE.Vector3(5, 0.25, 1,),
-            new THREE.Vector3(0, 0, 1),
-        ]);
+
+        if (usedTriangles.current) trianglesStorage.returnItems(...usedTriangles.current);
+        const _triangles = trianglesStorage.getItems(triangles.length);
+        for (let i = 0; i < triangles.length; i++) {
+            const objTriangle = _triangles[i];
+            const mathTriangle = triangles[i];
+            const points = mathTriangle
+                .map(point => new THREE.Vector3(point.x, point.y, point.z))as [THREE.Vector3, THREE.Vector3, THREE.Vector3]
+
+            objTriangle
+                .setPoints(points);
+        }
+            /*_triangles.forEach(triangle => triangle.setPoints([
+                new THREE.Vector3(triangle.c, -0.75, 1),
+                new THREE.Vector3(5, 0.25, 1,),
+                new THREE.Vector3(0, 0, 1),
+            ]));*/
+            console.log(_triangles);
 
             //const sphere = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshStandardMaterial({color: THREE.Color.NAMES.white, side: THREE.DoubleSide}))
 
-        scene.add(triangle);
+        scene.add(..._triangles);
+        usedTriangles.current = _triangles;
             scene.background = new THREE.Color(THREE.Color.NAMES.blue);
         console.log('triangle added');
         render(renderer!, scene, camera, controllers.current);
+        return () => {
+            console.log('returning triangles');
+            trianglesStorage.returnItems(..._triangles);
+        }
         }, 1000);
-    }, [rendererRef.current, sceneRef.current, cameraRef.current, controllers.current])
+    }, [rendererRef.current, sceneRef.current, cameraRef.current, controllers.current, triangles])
 
     return (
         <div>
