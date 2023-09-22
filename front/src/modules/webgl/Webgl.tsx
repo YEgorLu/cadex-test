@@ -24,28 +24,15 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
         const width = canvasRef.current.offsetWidth;
         const height = canvasRef.current.offsetHeight;
 
-        const camera = cameraRef.current;
-        camera.fov = 25;
-        camera.aspect = width / height;
-        camera.near = .1;
-        camera.far = 1000;
-        camera.position.z = 50;
+        const camera = cameraRef.current
+        configureCamera(camera, width, height);
 
 
         const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current });
         rendererRef.current = renderer;
         renderer.setSize(width, height);
 
-        const light = new THREE.DirectionalLight(THREE.Color.NAMES.white, 1);
-        const ambient = new THREE.DirectionalLight(THREE.Color.NAMES.white, 1);
-        light.position.x = 50;
-        light.position.y = 50;
-        light.position.z = 50;
-        ambient.position.x = -50;
-        ambient.position.y = -50;
-        ambient.position.z = -50;
-        sceneRef.current.add(light, ambient);
-
+        setLights(sceneRef.current);
 
         const orbitControls = new OrbitControls(camera, renderer.domElement);
         controllers.current.push(orbitControls);
@@ -68,7 +55,6 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
         canvasRef.current!.addEventListener('resize', resizeHandler);
         render();
 
-        // Clean up
         return () => {
             renderer.dispose();
             orbitControls.dispose();
@@ -85,33 +71,15 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
 
         if (usedTriangles.current) trianglesStorage.returnItems(...usedTriangles.current);
         const _triangles = trianglesStorage.getItems(triangles.length * 2);
-        for (let i = 0; i < triangles.length; i++) {
-            const objTriangle = _triangles[i];
-            const mathTriangle = triangles[i];
-            const points = mathTriangle
-                .map(point => new THREE.Vector3(point.x, point.y, point.z))as [THREE.Vector3, THREE.Vector3, THREE.Vector3]
-
-            objTriangle
-                .setPoints(points);
-        }
-
-        for (let i = 0; i < triangles.length; i++) {
-            const objTriangle = _triangles[i + triangles.length];
-            const mathTriangle = triangles[i];
-            const points = mathTriangle
-                .map(point => new THREE.Vector3(point.x, 0, point.z))as [THREE.Vector3, THREE.Vector3, THREE.Vector3]
-
-            objTriangle
-                .setPoints(points);
-        }
+        setTopTriangles(_triangles, triangles);
+        setBottomTriangles(_triangles, triangles);
 
         scene.add(..._triangles);
         usedTriangles.current = _triangles;
             scene.background = new THREE.Color(THREE.Color.NAMES.blue);
-        console.log('triangle added');
+
         render(renderer!, scene, camera, controllers.current);
         return () => {
-            console.log('returning triangles');
             trianglesStorage.returnItems(..._triangles);
         }
         }, 1000);
@@ -125,6 +93,51 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
 }
 
 export default WebGL;
+
+const setTopTriangles = (objTriangles: Triangle[], mathTriangles: MathTriangle[]) => {
+    for (let i = 0; i < mathTriangles.length; i++) {
+        const objTriangle = objTriangles[i];
+        const mathTriangle = mathTriangles[i];
+        const points = mathTriangle
+            .map(point => new THREE.Vector3(point.x, point.y, point.z)) as [THREE.Vector3, THREE.Vector3, THREE.Vector3]
+
+        objTriangle
+            .setPoints(points);
+    }
+}
+
+const setBottomTriangles = (objTriangles: Triangle[], mathTriangles: MathTriangle[]) => {
+    for (let i = 0; i < mathTriangles.length; i++) {
+        const objTriangle = objTriangles[i + mathTriangles.length];
+        const mathTriangle = mathTriangles[i];
+        const points = mathTriangle
+            .map(point => new THREE.Vector3(point.x, 0, point.z)) as [THREE.Vector3, THREE.Vector3, THREE.Vector3]
+
+        objTriangle
+            .setPoints(points);
+    }
+}
+
+const setLights = (scene: THREE.Scene) => {
+    const light1 = new THREE.DirectionalLight(THREE.Color.NAMES.white, 1);
+    const light2 = new THREE.DirectionalLight(THREE.Color.NAMES.white, 1);
+    light1.position.x = 50;
+    light1.position.y = 50;
+    light1.position.z = 50;
+    light2.position.x = -50;
+    light2.position.y = -50;
+    light2.position.z = -50;
+
+    scene.add(light1, light2);
+}
+
+const configureCamera = (camera: THREE.PerspectiveCamera, width: number, height: number) => {
+    camera.fov = 25;
+    camera.aspect = width / height;
+    camera.near = .1;
+    camera.far = 1000;
+    camera.position.z = 50;
+}
 
 const render = (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, controllers: {update: () => void}[]) => {
     requestAnimationFrame(() => {

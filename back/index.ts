@@ -2,6 +2,7 @@ import http from 'http';
 import url from 'url';
 import {IncomingMessage, ServerResponse} from 'http';
 import ipc from "./python_ipc";
+import {Triangle} from "../front/src/models/triangle";
 
 export class ConeData {
     height: number;
@@ -45,9 +46,7 @@ const server = http
                     const coneData = new ConeData(coneDataRaw);
 
                     if (!coneData.invalid) {
-                        /*const result = calculateCone(coneData);
-                        console.log(result);*/
-                        ipc.send(coneData)
+                        ipc.send<ConeData,Triangle>(coneData)
                             .then((ans) => {
                                 res.writeHead(200, {'Content-Type': 'application/json'});
                                 res.end(JSON.stringify(ans));
@@ -70,31 +69,6 @@ const server = http
             res.end();
         }
     });
-
-/* moved to python
-function calculateCone(data: ConeData): any[] {
-    const triangles = [];
-    for (let i = 0; i < data.segments; i++) {
-        triangles.push(makeTriangle(data, i));
-    }
-    return triangles;
-}
-
-function makeTriangle({height, radius, segments}: ConeData, curSegment: number) {
-    return [
-        {x: 0, y: height, z: 0},
-        makeP(curSegment, radius, segments),
-        makeP(curSegment + 1, radius, segments),
-    ]
-}
-
-function makeP(index: number, radius: number, segments: number) {
-    return {
-        x: radius * Math.cos(2 * Math.PI * index / segments),
-        y: 0,
-        z: radius * Math.sin(2 * Math.PI * index / segments),
-    }
-}*/
 
 server.listen(3001, 'localhost', () => {
     console.log('Server is running on port 3001');

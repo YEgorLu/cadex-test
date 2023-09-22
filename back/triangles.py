@@ -24,7 +24,6 @@ def calculate_cone(params):
 def is_valid_params(params):
   for key in keys:
     if key not in params or math.isnan(float(params[key])):
-      sys.stderr.write('error')
       return False
   return True
 
@@ -34,11 +33,12 @@ while True:
   msg = json.loads(msg_json)
 
   if "content" not in msg or "id" not in msg:
-    sys.stderr.write('error')
+    sys.stderr.write(json.dumps({"isError": True}))
 
   params = msg["content"]
 
   if (not is_valid_params(params)):
+      sys.stderr.write(json.dumps({"isError": True}))
       continue  
 
   triangles = calculate_cone(params)
