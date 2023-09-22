@@ -4,7 +4,8 @@ import {Triangle} from "../models/triangle";
 export default function getTriangles(params: GetTrianglesParameters): Promise<GetTrianglesResponse> {
     return axios
         .post<GetTrianglesResponse>('http://localhost:3001/cone', params)
-        .then(res => res.data);
+        .then(res => res.data)
+        .then(res => {console.log(res); return res});
 }
 
 export interface GetTrianglesParameters {
@@ -13,6 +14,4 @@ export interface GetTrianglesParameters {
     segments: number;
 }
 
-export interface GetTrianglesResponse {
-    triangles: Triangle[];
-}
+export type GetTrianglesResponse = Triangle[];

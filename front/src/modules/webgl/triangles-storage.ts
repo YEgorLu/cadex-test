@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import {ShapeGeometry} from "three";
+import type {Triangle as MathTriangle} from "../../models/triangle";
+import {Point} from "../../models/point";
 
 export class TrianglesStorage {
     private items: Triangle[] = [];
@@ -29,7 +30,8 @@ export class TrianglesStorage {
 export class Triangle extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> {
     constructor(points?: [THREE.Vector3, THREE.Vector3, THREE.Vector3]) {
         const geometry = new THREE.BufferGeometry();
-        const material = new THREE.MeshStandardMaterial({color: THREE.Color.NAMES.white, side: THREE.DoubleSide});
+        const material = new THREE.MeshStandardMaterial({color: THREE.Color.NAMES.grey, side: THREE.DoubleSide});
+        geometry.computeVertexNormals();
 
         super(geometry, material);
 
@@ -39,13 +41,24 @@ export class Triangle extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandar
     }
 
     setPoints(points: [THREE.Vector3, THREE.Vector3, THREE.Vector3]) {
-        const verticesElements = points.reduce((acc: number[], cur) => {
-            acc.push(cur.x, cur.y, cur.z);
-            return acc
-        }, [])
+        const verticesElements = this.reducePointsToArray(points);
         const vertices1 = new Float32Array(verticesElements);
         this.geometry.setAttribute('position', new THREE.BufferAttribute(vertices1, 3));
         this.geometry.computeVertexNormals();
+    }
+
+    setNormal(normal: THREE.Vector3) {
+        this.geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array([
+            normal.x, normal.y, normal.z
+        ]), 1));
+        this.geometry.computeVertexNormals();
+    }
+
+    private reducePointsToArray(points: Point[]) {
+        return points.reduce((acc: number[], cur) => {
+            acc.push(cur.x, cur.y, cur.z);
+            return acc
+        }, [])
     }
 }
 

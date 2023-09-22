@@ -1,3 +1,6 @@
 import {Point} from "./point";
 
-export type Triangle = [Point, Point, Point];
+export type Triangle = {
+    points: [Point, Point, Point];
+    normal: Point;
+}

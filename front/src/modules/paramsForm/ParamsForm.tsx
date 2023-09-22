@@ -4,7 +4,7 @@ import getTriangles, {GetTrianglesParameters} from "../../requests/get-triangles
 import style from "./ParamsForm.module.scss";
 
 export interface ParamsFormProps {
-    afterGetTriangles: (triangles: Triangle[]) => void;
+    afterGetTriangles: (triangles: Triangle[], height: number, radius: number) => void;
 }
 
 const ParamsForm: FC<ParamsFormProps> = ({afterGetTriangles}) => {
@@ -16,10 +16,11 @@ const ParamsForm: FC<ParamsFormProps> = ({afterGetTriangles}) => {
     const fetchTriangles = useCallback((params: GetTrianglesParameters) => getTriangles(params), [height, radius, segments]);
     const onSubmit = (ev: FormEvent<HTMLFormElement>) => {
         ev.preventDefault();
+        if (height <= 0 || radius <= 0 || segments <= 0) alert('Parameters must be bigger than 0');
         setLoading(true);
         fetchTriangles({height, radius, segments})
             .then(resp => {
-                afterGetTriangles(resp as any);
+                afterGetTriangles(resp, height, radius);
                 console.log(resp);
                 console.log('completed');
             })
