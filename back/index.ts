@@ -1,9 +1,9 @@
 import http from 'http';
 import url from 'url';
 import {IncomingMessage, ServerResponse} from 'http';
-import {Context} from "node:vm";
+import ipc from "./python_ipc";
 
-class ConeData {
+export class ConeData {
     height: number;
     radius: number;
     segments: number;
@@ -34,7 +34,6 @@ const server = http
             res.end();
         }
 
-        console.log(pathname);
         if (pathname === '/cone' && req.method === 'POST') {
             const requestBody = [];
             req.on('data', chunk => {
@@ -46,10 +45,17 @@ const server = http
                     const coneData = new ConeData(coneDataRaw);
 
                     if (!coneData.invalid) {
-                        const result = calculateCone(coneData);
-                        console.log(result);
-                        res.writeHead(200, {'Content-Type': 'application/json'});
-                        res.end(JSON.stringify(result));
+                        /*const result = calculateCone(coneData);
+                        console.log(result);*/
+                        ipc.send(coneData)
+                            .then((ans) => {
+                                res.writeHead(200, {'Content-Type': 'application/json'});
+                                res.end(JSON.stringify(ans));
+                            })
+                            .catch(() => {
+                                res.statusCode = 400;
+                                res.end('Unexpected error');
+                            });
                     } else {
                         res.statusCode = 400;
                         res.end('Invalid cone data');
@@ -65,6 +71,7 @@ const server = http
         }
     });
 
+/* moved to python
 function calculateCone(data: ConeData): any[] {
     const triangles = [];
     for (let i = 0; i < data.segments; i++) {
@@ -77,17 +84,18 @@ function makeTriangle({height, radius, segments}: ConeData, curSegment: number) 
     return [
         {x: 0, y: height, z: 0},
         makeP(curSegment, radius, segments),
-        makeP(curSegment+1, radius, segments),
+        makeP(curSegment + 1, radius, segments),
     ]
 }
 
 function makeP(index: number, radius: number, segments: number) {
     return {
-        x: radius * Math.cos(2*Math.PI*index / segments),
+        x: radius * Math.cos(2 * Math.PI * index / segments),
         y: 0,
-        z: radius * Math.sin(2*Math.PI*index / segments),
+        z: radius * Math.sin(2 * Math.PI * index / segments),
     }
-}
+}*/
+
 server.listen(3001, 'localhost', () => {
     console.log('Server is running on port 3001');
 });

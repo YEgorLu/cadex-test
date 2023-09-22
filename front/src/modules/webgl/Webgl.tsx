@@ -2,7 +2,7 @@ import {FC, useEffect, useRef} from "react";
 import * as THREE from "three";
 import {Triangle as MathTriangle} from "../../models/triangle";
 import style from './Webgl.module.scss';
-import {ArcballControls} from "three/examples/jsm/controls/ArcballControls";
+import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import trianglesStorage, {Triangle} from "./triangles-storage";
 
 export interface WebGLProps {
@@ -25,13 +25,12 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
         const height = canvasRef.current.offsetHeight;
 
         const camera = cameraRef.current;
-        camera.fov = 75;
+        camera.fov = 25;
         camera.aspect = width / height;
         camera.near = .1;
         camera.far = 1000;
         camera.position.z = 50;
-        /*camera.position.x = 50;
-        camera.position.y = 50;*/
+
 
         const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current });
         rendererRef.current = renderer;
@@ -47,15 +46,15 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
         ambient.position.z = -50;
         sceneRef.current.add(light, ambient);
 
-        // Create ArcBallController
-        const arcBallController = new ArcballControls(camera, renderer.domElement);
-        controllers.current.push(arcBallController);
-        arcBallController.cursorZoom = true;
+
+        const orbitControls = new OrbitControls(camera, renderer.domElement);
+        controllers.current.push(orbitControls);
+
 
         const render = () => {
             requestAnimationFrame(render);
             renderer.render(sceneRef.current, camera);
-            arcBallController.update();
+            orbitControls.update();
         };
 
         const resizeHandler = () => {
@@ -72,7 +71,7 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
         // Clean up
         return () => {
             renderer.dispose();
-            arcBallController.dispose();
+            orbitControls.dispose();
         };
     }, [canvasRef.current]);
 
@@ -85,7 +84,7 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
         if ([renderer, scene, camera].some(v => !v)) return;
 
         if (usedTriangles.current) trianglesStorage.returnItems(...usedTriangles.current);
-        const _triangles = trianglesStorage.getItems(triangles.length);
+        const _triangles = trianglesStorage.getItems(triangles.length * 2);
         for (let i = 0; i < triangles.length; i++) {
             const objTriangle = _triangles[i];
             const mathTriangle = triangles[i];
@@ -95,14 +94,16 @@ const WebGL: FC<WebGLProps> = ({triangles}) => {
             objTriangle
                 .setPoints(points);
         }
-            /*_triangles.forEach(triangle => triangle.setPoints([
-                new THREE.Vector3(triangle.c, -0.75, 1),
-                new THREE.Vector3(5, 0.25, 1,),
-                new THREE.Vector3(0, 0, 1),
-            ]));*/
-            console.log(_triangles);
 
-            //const sphere = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshStandardMaterial({color: THREE.Color.NAMES.white, side: THREE.DoubleSide}))
+        for (let i = 0; i < triangles.length; i++) {
+            const objTriangle = _triangles[i + triangles.length];
+            const mathTriangle = triangles[i];
+            const points = mathTriangle
+                .map(point => new THREE.Vector3(point.x, 0, point.z))as [THREE.Vector3, THREE.Vector3, THREE.Vector3]
+
+            objTriangle
+                .setPoints(points);
+        }
 
         scene.add(..._triangles);
         usedTriangles.current = _triangles;
